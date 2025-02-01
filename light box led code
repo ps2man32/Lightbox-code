@@ -1,0 +1,215 @@
+//This section is for the LED output
+#include <FastLED.h>
+#define NUM_LEDS 41
+#define DATA_PIN 4
+
+// leds 0-12 bottom
+//leds 13-21 side
+//22-32 top
+//33-41 other side
+
+#define PERIOD 5 //not currently used
+#define GLOWPERIOD 6 // used in sinbeat for sinewave period
+CRGB leds[NUM_LEDS]; //declaring what numbers are available for calling leds
+
+#define ARRAY_SIZE(A) (sizeof(A) / sizeof((A)[0])) // not really used right now
+
+const uint8_t BottomArray[] = {0,1,2,3,4,5,6,7,8,9,10,11,12}; // create an arrat for each side of the box.  not used in current code
+const uint8_t BottomArraySize = ARRAY_SIZE(BottomArray);
+
+const uint8_t LsideArray[] = {13,14,15,16,17,18,19,20,21};
+const uint8_t LsideArraySize = ARRAY_SIZE(LsideArray);
+
+const uint8_t TopArray[] = {22,23,24,25,26,27,28,29,30,31,32};
+const uint8_t TopArraySize = ARRAY_SIZE(TopArray);
+
+const uint8_t RsideArray[] = {33,34,35,36,37,38,39,40,41};
+const uint8_t RsideArraySize = ARRAY_SIZE(RsideArray);
+
+unsigned long changeEventInterval = 1500; // not currently used
+unsigned long glowEventInterval = 60000/GLOWPERIOD; // not currently used
+unsigned long previousTime = 0;
+unsigned long currentTime = 0;
+
+
+uint8_t BRIGHTNESS = 127; //variable for overall brightnes of leds range of 0-255
+uint8_t paletteIndex = 0; //used to change what the starting point is when using color gradient functions
+uint8_t colorIndex[NUM_LEDS]; 
+//uint8_t whichPalette = 0;
+//uint8_t whichPattern = 0;
+uint8_t cyclecount = 1;
+uint8_t loopcount = 0;
+
+//defines a color gradient with a certain color called out per index
+DEFINE_GRADIENT_PALETTE (phenoix) {
+  
+0,  255, 0, 0,
+5, 255, 0, 0,
+11,  255, 0, 0,
+17,  255, 0, 0,
+23,  255, 0, 0,
+29,  255, 0, 0,
+36,  255, 0, 0,
+42,  255, 0, 0,
+48,  255, 0, 0,
+54,  255, 0, 0,
+60,  255, 0, 0,
+66,  255, 0, 0,
+72,  255, 0, 0,
+78,  255, 0, 0,
+84,  255, 4, 0,
+90,  255, 8, 0,
+96,  255, 12, 0,
+102, 255, 16, 0,
+108, 255, 20, 0,
+114, 255, 24, 0,
+121, 255, 28, 0,
+127, 255, 32, 0,
+133, 255, 60, 0,
+139, 255, 90, 0,
+145, 255, 120, 0,
+151, 255, 150, 0,
+157, 255, 180, 0,
+163, 255, 210, 0,
+169, 255, 210, 0,
+176, 255, 180, 0,
+182, 255, 150, 0,
+188, 255, 120, 0,
+194, 255, 90, 0,
+200, 255, 60, 0,
+206, 255, 32, 0,
+212, 255, 28, 0,
+218, 255, 24, 0,
+224, 255, 20, 0,
+230, 255, 16, 0,
+236, 255, 12, 0,
+242, 255, 8, 0,
+248, 255, 4, 0,
+255, 255, 0, 0,
+
+};
+
+
+
+
+
+
+
+CRGBPalette256 currentPalette(phenoix); //defines the griendt at a 256 bit pallete for indexing
+
+
+void setup() {
+  // put your setup code here, to run once:
+   
+  delay(2000);
+  //Serial.begin(115200); //Begin Serial output for checks
+  FastLED.addLeds<WS2812, DATA_PIN, GRB>(leds, NUM_LEDS); // tells teh controller what led is being used, what pin to put the signal to, the order for the signal is green/red/blue, and the highest number in the string
+  fill_solid(leds, NUM_LEDS,CRGB(0,0,0) ); //overwrites any exsisting collor data to turn all leds odd
+//this was used for color testing prior to creating the gradiaent  not neeeded but will delete later
+//fill_solid(leds, 13,CRGB(255,0,0) );
+//for (uint8_t i=0; i<BottomArraySize; i++){
+  //leds[ BottomArray[i] ] = CRGB(255,0,0);
+//}
+
+//uint8_t j = TopArraySize;
+//uint8_t green = 60;
+//for (uint8_t i=0; i<TopArraySize/2+1; i++){
+  //leds[ TopArray[i] ] = CRGB(255,green,0);
+  //leds[ TopArray[j] ] = CRGB(255,green,0);
+  //green=green+30;
+  //j--;  
+
+//}
+
+//uint8_t yellow=0;
+//for (uint8_t i=0; i<LsideArraySize; i++){
+  //leds[ LsideArray[i] ] = CRGB(255,yellow,0);
+  //yellow=yellow+4;
+//}
+//uint8_t yellow2=yellow;
+//for (uint8_t i=0; i<RsideArraySize; i++){
+  //leds[ RsideArray[i] ] = CRGB(255,yellow2,0);
+  //yellow2=yellow2-4;
+//}
+
+
+
+
+//for (uint8_t i=12; i<NUM_LEDS; i++){
+  //leds[i].fadeLightBy(128);
+//}
+
+
+//fill_solid(leds+22, 25,CRGB(255,115,0) );
+//fill_palette(leds, NUM_LEDS, paletteIndex, 6, currentPalette, BRIGHTNESS, LINEARBLEND);
+FastLED.show();  //displays all written collors to the strip
+currentTime = millis(); //setting up loop timer
+previousTime = millis(); //setting up loop timer
+}
+
+
+void loop() {
+
+part_fade();
+
+
+
+}
+
+  
+
+//this section for a constant breate color effect.  It is not in the current loop and none of the code is commented on
+void whole_fade() {
+
+uint8_t sinBeat = beatsin8(GLOWPERIOD,0,160,0,192); // 192 phase offset
+FastLED.clear();
+fill_palette(leds, NUM_LEDS, paletteIndex, 6, currentPalette, sinBeat, LINEARBLEND);
+FastLED.show();
+
+}
+
+
+
+void part_fade(){
+  currentTime = millis();  
+  uint8_t sinBeat = beatsin8(GLOWPERIOD,0,160); // sinbeat is a function that creates a sine wave.  as written it is (number of times it returns to min value per minute, min value, max value
+  if (cyclecount = 1){ //intended number of loops of the next if statement loop
+    if (currentTime - previousTime <=(60/GLOWPERIOD)*1000*2 ){ // the formula works out to do this function if the current time is less than the amount of time it takes to do two full sinewave sweeps
+      FastLED.clear();  
+      fill_palette(leds, NUM_LEDS, paletteIndex, 6, currentPalette, BRIGHTNESS, LINEARBLEND); //this fills the color for the leds to display in the gradient.  the values are (which led string starting from zero, the number of the last led to fill, what index number to start when pulling color info from the color pallet, how many indexies to move for the next led in the strand, which pallet to pull from, how bright the pallet should be, how to blend colors if it lands on an index not explictly called out in the pallet)
+      fill_solid(leds, 12, CRGB( 0,0,0)); //remove all color infor from the leds 0-12 (this is needed for the next function to work)
+      fill_palette(leds, 12, paletteIndex, 6, currentPalette, sinBeat, LINEARBLEND); //this is the same as the previous pallet fill, except the brightness is the value of the generated sinewave
+      FastLED.show();
+    } else{
+      cyclecount = 2; //intended to move the variable so it will bypass the if statements on the next loop
+      previousTime = currentTime; //reset timer, inteded for the timer to be reset to zero for the next loop to begin.  If this line is // out, the loop ends here  If this line is active, the above if statements keep getting repeated
+      //FastLED.clear(); //used to test the if loop
+      //FastLED.show();  //used to test the  if loop
+      }
+  }
+   if (cyclecount = 2){  //identical to the above section except changing the leds on the side of the box where the above code is bottom only
+    if (currentTime - previousTime <=(60/GLOWPERIOD)*1000*2 ){ 
+      FastLED.clear();  
+      fill_palette(leds, NUM_LEDS, paletteIndex, 6, currentPalette, BRIGHTNESS, LINEARBLEND);
+      fill_solid(leds+12, 9, CRGB( 0,0,0));
+      fill_solid(leds+33, 8, CRGB( 0,0,0));
+      fill_palette(leds+12, 9, 84, 6, currentPalette, sinBeat, LINEARBLEND);
+      fill_palette(leds+33, 8, 206, 6, currentPalette, sinBeat, LINEARBLEND);
+      FastLED.show();
+     } //else{
+        //cyclecount = 3;
+        //previousTime = currentTime;
+     //}
+   //}
+     //intended to be for the top section only but could not get the sides only to work and this is a previous iteration of the code.
+  //if ((currentTime - previousTime >=GLOWPERIOD)&& (cyclecount = 2)){
+    //FastLED.clear();  
+    //fill_palette(leds, NUM_LEDS, paletteIndex, 6, currentPalette, BRIGHTNESS, LINEARBLEND);
+    //fill_solid(leds+21, 32, CRGB( 0,0,0));
+    //fill_palette(leds+21, 32, 133, 6, currentPalette, sinBeat, LINEARBLEND);
+    //FastLED.show();
+  //} else{
+    //cyclecount = 0;
+    //previousTime = currentTime;
+  //}
+}
